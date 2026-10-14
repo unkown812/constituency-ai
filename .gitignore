@@ -10,7 +10,7 @@ dist/
 build/
 .expo/
 *.tsbuildinfo
-
+.turbo/
 # Environment
 .env
 .env.local
