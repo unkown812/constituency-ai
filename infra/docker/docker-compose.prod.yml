@@ -1,0 +1,136 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ../../backend/api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - QDRANT_URL=${QDRANT_URL}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker:
+    build:
+      context: ../../backend/worker
+    command: celery -A celery_app worker --loglevel=info
+    environment:
+      - REDIS_URL=${REDIS_URL}
+    restart: always
+
+  speech:
+    build:
+      context: ../../backend/ai-services/speech
+    ports:
+      - "8001:8000"
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  translation:
+    build:
+      context: ../../backend/ai-services/translation
+    ports:
+      - "8002:8000"
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  llm:
+    build:
+      context: ../../backend/ai-services/llm
+    ports:
+      - "8003:8000"
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  vision:
+    build:
+      context: ../../backend/ai-services/vision
+    ports:
+      - "8004:8000"
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  embeddings:
+    build:
+      context: ../../backend/ai-services/embeddings
+    ports:
+      - "8005:8000"
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ocr:
+    build:
+      context: ../../backend/ai-services/ocr
+    ports:
+      - "8006:8000"
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  recommendation:
+    build:
+      context: ../../backend/ai-services/recommendation
+    ports:
+      - "8007:8000"
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - dashboard
+    restart: always
+
+  dashboard:
+    build:
+      context: ../../apps/dashboard
+    ports:
+      - "3000:3000"
+    restart: always

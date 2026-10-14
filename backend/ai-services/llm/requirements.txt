@@ -1,0 +1,5 @@
+fastapi[standard]>=0.115.0
+uvicorn[standard]>=0.32.0
+transformers>=4.46.0
+torch>=2.4.0
+vllm>=0.6.0
